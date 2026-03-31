@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inverse Trigonometric Functions — Lesson 3.9 — Mr. Omar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    min-height: 100vh;
+    background: #0B1F3A;
+    color: #fff;
+    font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  input:focus, textarea:focus { outline: none; border-color: #1F6FEB !important; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const C = {
+  navy: "#0B1F3A", blue: "#1F6FEB", teal: "#0F766E", orange: "#F59E0B",
+  gold: "#FBBF24", sky: "#60A5FA", ink: "#111827", muted: "#4B5563",
+  paper: "#F8FAFC", coral: "#ef476f", green: "#06d6a0", mint: "#34d399",
+  red: "#DC2626", emerald: "#16A34A", purple: "#8B5CF6", indigo: "#6366F1",
+};
+
+const SECTIONS = [
+  "welcome","warmup","arcsin_table","arcsin_eval","arccos_table","arccos_eval",
+  "arctan_table","arctan_eval","domain_range","calculator","properties",
+  "composites","algebraic","application","mixed","exit","results"
+];
+
+// ─── MATH HELPERS ─────────────────────────────────────────────────────────────
+const PI = "π";
+const frac = (n,d) => d===1 ? `${n}` : `${n}/${d}`;
+const negfrac = (n,d) => d===1 ? `−${n}` : `−${n}/${d}`;
+
+// ─── QUESTION DATA ────────────────────────────────────────────────────────────
+
+const WARMUP_QUESTIONS = [
+  { question: "A function has an inverse only if it passes the ___.", options: ["Vertical Line Test", "Horizontal Line Test", "Diagonal Test", "Origin Test"], correct: 1, explanation: "A function must be one-to-one (pass the HLT) to have an inverse." },
+  { question: "If f(a) = b, then f⁻¹(b) = ___.", options: ["b", "a", "−a", "1/a"], correct: 1, explanation: "The inverse undoes the function: f⁻¹(b) = a." },
+  { question: "Does y = sin(x) pass the Horizontal Line Test on (−∞, ∞)?", options: ["Yes — it's one-to-one", "No — horizontal lines hit it multiple times", "Only for positive x", "Only between 0 and 2π"], correct: 1, explanation: "Sine repeats every 2π, so every y-value is hit infinitely many times. It fails the HLT." },
+  { question: "To define an inverse for sine, we must ___.", options: ["Change the function to cosine", "Restrict the domain to an interval where it's one-to-one", "Flip it over the x-axis", "Only use positive angles"], correct: 1, explanation: "Restricting the domain makes sine one-to-one so we can define sin⁻¹(x)." },
+];
+
+// Arcsin table: students fill in sin(θ) values
+const ARCSIN_TABLE_ANGLES = [
+  { angle: "−π/2", display: "−π/2", sinVal: "−1" },
+  { angle: "−π/3", display: "−π/3", sinVal: "−√3/2" },
+  { angle: "−π/4", display: "−π/4", sinVal: "−√2/2" },
+  { angle: "−π/6", display: "−π/6", sinVal: "−1/2" },
+  { angle: "0", display: "0", sinVal: "0" },
+  { angle: "π/6", display: "π/6", sinVal: "1/2" },
+  { angle: "π/4", display: "π/4", sinVal: "√2/2" },
+  { angle: "π/3", display: "π/3", sinVal: "√3/2" },
+  { angle: "π/2", display: "π/2", sinVal: "1" },
+];
+
+const ARCSIN_EVAL = [
+  { question: "sin⁻¹(1) = ?", options: ["0", "π/6", "π/4", "π/2"], correct: 3, explanation: "sin(π/2) = 1, and π/2 is in [−π/2, π/2]. So sin⁻¹(1) = π/2." },
+  { question: "sin⁻¹(−1/2) = ?", options: ["−π/6", "−π/3", "5π/6", "11π/6"], correct: 0, explanation: "sin(−π/6) = −1/2, and −π/6 is in [−π/2, π/2]. Answer: −π/6." },
+  { question: "sin⁻¹(√2/2) = ?", options: ["π/6", "π/4", "π/3", "3π/4"], correct: 1, explanation: "sin(π/4) = √2/2, and π/4 is in [−π/2, π/2]. Answer: π/4." },
+  { question: "sin⁻¹(3/2) = ?", options: ["π/3", "2π/3", "Does not exist", "π"], correct: 2, explanation: "3/2 > 1, which is outside the domain [−1, 1]. So sin⁻¹(3/2) does not exist!" },
+  { question: "sin⁻¹(−√3/2) = ?", options: ["−π/3", "−π/6", "4π/3", "5π/3"], correct: 0, explanation: "sin(−π/3) = −√3/2, and −π/3 ∈ [−π/2, π/2]. Answer: −π/3." },
+];
+
+const ARCCOS_TABLE_ANGLES = [
+  { angle: "0", display: "0", cosVal: "1" },
+  { angle: "π/6", display: "π/6", cosVal: "√3/2" },
+  { angle: "π/4", display: "π/4", cosVal: "√2/2" },
+  { angle: "π/3", display: "π/3", cosVal: "1/2" },
+  { angle: "π/2", display: "π/2", cosVal: "0" },
+  { angle: "2π/3", display: "2π/3", cosVal: "−1/2" },
+  { angle: "3π/4", display: "3π/4", cosVal: "−√2/2" },
+  { angle: "5π/6", display: "5π/6", cosVal: "−√3/2" },
+  { angle: "π", display: "π", cosVal: "−1" },
+];
+
+const ARCCOS_EVAL = [
+  { question: "cos⁻¹(0) = ?", options: ["0", "π/4", "π/2", "π"], correct: 2, explanation: "cos(π/2) = 0, and π/2 ∈ [0, π]. Answer: π/2." },
+  { question: "cos⁻¹(2) = ?", options: ["0", "π/3", "Does not exist", "2π"], correct: 2, explanation: "2 > 1, outside the domain [−1, 1]. cos⁻¹(2) does not exist!" },
+  { question: "cos⁻¹(√2/2) = ?", options: ["π/6", "π/4", "π/3", "3π/4"], correct: 1, explanation: "cos(π/4) = √2/2, and π/4 ∈ [0, π]. Answer: π/4." },
+  { question: "cos⁻¹(−1/2) = ?", options: ["−π/3", "π/3", "2π/3", "5π/3"], correct: 2, explanation: "cos(2π/3) = −1/2, and 2π/3 ∈ [0, π]. Negative cosine → Q II angle!" },
+  { question: "cos⁻¹(1) = ?", options: ["0", "π/2", "π", "2π"], correct: 0, explanation: "cos(0) = 1, and 0 ∈ [0, π]. Answer: 0." },
+];
+
+const ARCTAN_TABLE_ANGLES = [
+  { angle: "−π/3", display: "−π/3", tanVal: "−√3" },
+  { angle: "−π/4", display: "−π/4", tanVal: "−1" },
+  { angle: "−π/6", display: "−π/6", tanVal: "−√3/3" },
+  { angle: "0", display: "0", tanVal: "0" },
+  { angle: "π/6", display: "π/6", tanVal: "√3/3" },
+  { angle: "π/4", display: "π/4", tanVal: "1" },
+  { angle: "π/3", display: "π/3", tanVal: "√3" },
+];
+
+const ARCTAN_EVAL = [
+  { question: "tan⁻¹(1) = ?", options: ["0", "π/6", "π/4", "π/2"], correct: 2, explanation: "tan(π/4) = 1, and π/4 ∈ (−π/2, π/2). Answer: π/4." },
+  { question: "tan⁻¹(−√3) = ?", options: ["−π/3", "−π/6", "2π/3", "5π/6"], correct: 0, explanation: "tan(−π/3) = −√3, and −π/3 ∈ (−π/2, π/2). Answer: −π/3." },
+  { question: "tan⁻¹(0) = ?", options: ["π/2", "π", "0", "−π/2"], correct: 2, explanation: "tan(0) = 0. Answer: 0." },
+  { question: "tan⁻¹(√3/3) = ?", options: ["π/6", "π/4", "π/3", "5π/6"], correct: 0, explanation: "tan(π/6) = √3/3 ≈ 0.577. Answer: π/6." },
+  { question: "tan⁻¹(100) = ?", options: ["Does not exist", "Close to π/2", "100", "π"], correct: 1, explanation: "tan⁻¹ accepts ALL real numbers! As input → ∞, output → π/2 (but never reaches it)." },
+];
+
+const DOMAIN_RANGE_Q = [
+  { question: "What is the domain of y = sin⁻¹(x)?", options: ["(−∞, ∞)", "[−1, 1]", "[0, π]", "[−π/2, π/2]"], correct: 1, explanation: "sin⁻¹ only accepts inputs from −1 to 1 (the range of sine)." },
+  { question: "What is the range of y = cos⁻¹(x)?", options: ["[−π/2, π/2]", "[−1, 1]", "[0, π]", "(−π/2, π/2)"], correct: 2, explanation: "cos⁻¹ outputs angles in [0, π] — Quadrants I and II." },
+  { question: "What is the domain of y = tan⁻¹(x)?", options: ["[−1, 1]", "(−∞, ∞)", "[0, π]", "(−π/2, π/2)"], correct: 1, explanation: "tan⁻¹ accepts ANY real number as input!" },
+  { question: "What is the range of y = tan⁻¹(x)?", options: ["[−π/2, π/2]", "(−π/2, π/2)", "[0, π]", "(−∞, ∞)"], correct: 1, explanation: "Open parentheses! tan is undefined at ±π/2, so tan⁻¹ never outputs those values." },
+  { question: "Which inverse trig function(s) output angles in Q I and Q IV?", options: ["sin⁻¹ and tan⁻¹", "cos⁻¹ only", "All three", "sin⁻¹ only"], correct: 0, explanation: "sin⁻¹ range: [−π/2, π/2] and tan⁻¹ range: (−π/2, π/2) both cover Q I and Q IV." },
+  { question: "cos⁻¹ outputs angles in which quadrants?", options: ["Q I and Q IV", "Q I and Q II", "Q I only", "All four"], correct: 1, explanation: "Range [0, π] means angles from the positive x-axis through Q I to Q II." },
+];
+
+const CALCULATOR_Q = [
+  { question: "sin⁻¹(1/4) ≈ ?", options: ["0.253", "0.524", "1.318", "0.785"], correct: 0, explanation: "sin⁻¹(0.25) ≈ 0.253 radians (about 14.5°)." },
+  { question: "cos⁻¹(−3/5) ≈ ?", options: ["0.927", "2.214", "−0.644", "1.571"], correct: 1, explanation: "cos⁻¹(−0.6) ≈ 2.214 radians (about 126.9°). Note: negative input → Q II angle > π/2." },
+  { question: "tan⁻¹(4.5) ≈ ?", options: ["0.219", "1.352", "1.571", "4.500"], correct: 1, explanation: "tan⁻¹(4.5) ≈ 1.352 radians (about 77.5°). Large input → close to π/2." },
+  { question: "cos⁻¹(1.5) = ?", options: ["0.927", "Does not exist (ERROR)", "1.500", "0.000"], correct: 1, explanation: "1.5 > 1 → outside the domain [−1, 1]. Calculator gives ERROR!" },
+];
+
+const PROPERTIES_Q = [
+  { statement: "sin⁻¹(sin(−π/10)) = −π/10", answer: true, explanation: "−π/10 ∈ [−π/2, π/2] ✓ → We CAN cancel. True!" },
+  { statement: "cos(cos⁻¹(2)) = 2", answer: false, explanation: "2 ∉ [−1, 1], so cos⁻¹(2) is undefined. False — DNE!" },
+  { statement: "cos⁻¹(cos(−π/4)) = −π/4", answer: false, explanation: "−π/4 ∉ [0, π], so we CANNOT cancel. cos(−π/4) = √2/2, then cos⁻¹(√2/2) = π/4, NOT −π/4." },
+  { statement: "tan⁻¹(tan(−π/3)) = −π/3", answer: true, explanation: "−π/3 ∈ (−π/2, π/2) ✓ → We CAN cancel. True!" },
+  { statement: "sin⁻¹(sin(2π/3)) = 2π/3", answer: false, explanation: "2π/3 ∉ [−π/2, π/2]! sin(2π/3) = √3/2, then sin⁻¹(√3/2) = π/3, NOT 2π/3." },
+  { statement: "tan(tan⁻¹(−1/2)) = −1/2", answer: true, explanation: "−1/2 ∈ (−∞, ∞) ✓ → We CAN cancel. True!" },
+  { statement: "cos⁻¹(cos(7π/6)) = 7π/6", answer: false, explanation: "7π/6 ∉ [0, π]! cos(7π/6) = −√3/2, then cos⁻¹(−√3/2) = 5π/6." },
+  { statement: "sin(sin⁻¹(0.7)) = 0.7", answer: true, explanation: "0.7 ∈ [−1, 1] ✓ → We CAN cancel. True!" },
+];
+
+const COMPOSITES_Q = [
+  { question: "cos(sin⁻¹(−1/2)) = ?", setup: "Let θ = sin⁻¹(−1/2). Then sin θ = −1/2 → opp = −1, hyp = 2 → adj = √3", options: ["√3/2", "1/2", "−√3/2", "−1/2"], correct: 0, explanation: "adj/hyp = √3/2. Since θ is in Q IV (negative sin), cosine is positive." },
+  { question: "sin(cos⁻¹(5/13)) = ?", setup: "Let θ = cos⁻¹(5/13). Then cos θ = 5/13 → adj = 5, hyp = 13 → opp = 12", options: ["5/12", "12/13", "5/13", "13/12"], correct: 1, explanation: "opp/hyp = 12/13." },
+  { question: "tan(sin⁻¹(3/5)) = ?", setup: "Let θ = sin⁻¹(3/5). Then sin θ = 3/5 → opp = 3, hyp = 5 → adj = 4", options: ["3/4", "4/3", "4/5", "3/5"], correct: 0, explanation: "opp/adj = 3/4." },
+  { question: "cos(tan⁻¹(4/3)) = ?", setup: "Let θ = tan⁻¹(4/3). Then tan θ = 4/3 → opp = 4, adj = 3 → hyp = 5", options: ["4/5", "3/5", "3/4", "5/3"], correct: 1, explanation: "adj/hyp = 3/5." },
+];
+
+const ALGEBRAIC_Q = [
+  { question: "sin(cos⁻¹(x)) = ?  (for 0 < x ≤ 1)", options: ["√(1 − x²)", "x", "1/x", "√(x² − 1)"], correct: 0, explanation: "cos θ = x/1 → adj = x, hyp = 1 → opp = √(1 − x²). So sin θ = √(1 − x²)/1." },
+  { question: "cos(sin⁻¹(x)) = ?  (for −1 ≤ x ≤ 1)", options: ["x", "√(1 − x²)", "1 − x", "x²"], correct: 1, explanation: "sin θ = x/1 → opp = x, hyp = 1 → adj = √(1 − x²). So cos θ = √(1 − x²)." },
+  { question: "tan(cos⁻¹(x)) = ?  (for 0 < x ≤ 1)", options: ["x/√(1 − x²)", "√(1 − x²)/x", "√(1 + x²)/x", "x"], correct: 1, explanation: "cos θ = x → adj = x, hyp = 1, opp = √(1 − x²). tan = opp/adj = √(1 − x²)/x." },
+];
+
+const APPLICATION_Q = [
+  { scenario: "An airplane flies at 5 miles altitude toward a point directly over your house. The horizontal distance is x miles. What is θ (the angle of elevation) as a function of x?", icon: "✈️", options: ["θ = sin⁻¹(5/x)", "θ = cos⁻¹(5/x)", "θ = tan⁻¹(5/x)", "θ = tan⁻¹(x/5)"], correct: 2, explanation: "tan θ = opposite/adjacent = 5/x, so θ = tan⁻¹(5/x)." },
+  { scenario: "Using the airplane problem: find θ when x = 8 miles. (Round to nearest degree.)", icon: "📐", options: ["32°", "39°", "45°", "51°"], correct: 0, explanation: "θ = tan⁻¹(5/8) ≈ tan⁻¹(0.625) ≈ 0.5586 rad ≈ 32°." },
+  { scenario: "A 20-ft ladder leans against a wall reaching 16 ft high. What angle does the ladder make with the ground?", icon: "🪜", options: ["sin⁻¹(16/20) ≈ 53°", "cos⁻¹(16/20) ≈ 37°", "tan⁻¹(16/20) ≈ 39°", "sin⁻¹(20/16) — undefined"], correct: 0, explanation: "sin θ = opposite/hypotenuse = 16/20. θ = sin⁻¹(4/5) ≈ 53.1°." },
+];
+
+const MIXED_PRACTICE = [
+  { question: "sin⁻¹(−1) = ?", options: ["−π/2", "π/2", "−π", "3π/2"], correct: 0 },
+  { question: "cos⁻¹(−√3/2) = ?", options: ["π/6", "5π/6", "−π/6", "7π/6"], correct: 1 },
+  { question: "tan⁻¹(−1) = ?", options: ["−π/4", "3π/4", "−π/2", "7π/4"], correct: 0 },
+  { question: "What is the range of sin⁻¹(x)?", options: ["[0, π]", "[−1, 1]", "[−π/2, π/2]", "(−π/2, π/2)"], correct: 2 },
+  { question: "sin⁻¹(sin(5π/6)) = ?", options: ["5π/6", "π/6", "−π/6", "π/3"], correct: 1 },
+  { question: "cos⁻¹(cos(−π/3)) = ?", options: ["−π/3", "π/3", "2π/3", "5π/3"], correct: 1 },
+  { question: "sin(cos⁻¹(3/5)) = ?", options: ["3/5", "4/5", "5/4", "3/4"], correct: 1 },
+  { question: "Does sin⁻¹(x) = 1/sin(x)?", options: ["Yes, always", "No — sin⁻¹ means the inverse function, NOT the reciprocal", "Only when x > 0", "Only on the unit circle"], correct: 1 },
+  { question: "As x → ∞, tan⁻¹(x) → ?", options: ["∞", "π/2", "0", "π"], correct: 1 },
+  { question: "cos(sin⁻¹(x)) in terms of x = ?", options: ["x", "1 − x", "√(1 − x²)", "x²"], correct: 2 },
+];
+
+const EXIT_TICKET = [
+  { type: "mc", question: "sin⁻¹(√3/2) = ?", options: ["π/6", "π/4", "π/3", "2π/3"], correct: 2 },
+  { type: "mc", question: "cos⁻¹(−1) = ?", options: ["0", "π/2", "π", "−π"], correct: 2 },
+  { type: "mc", question: "tan⁻¹(√3) = ?", options: ["π/6", "π/4", "π/3", "π/2"], correct: 2 },
+  { type: "fill", question: "sin⁻¹(sin(3π/4)) = ? (Enter as a fraction of π, e.g. π/4)", answer: "π/4" },
+  { type: "mc", question: "sin(cos⁻¹(8/17)) = ?", options: ["8/17", "15/17", "8/15", "17/15"], correct: 1 },
+  { type: "mc", question: "Which statement is TRUE?", options: [
+    "sin⁻¹(sin(5π/4)) = 5π/4",
+    "cos(cos⁻¹(0.3)) = 0.3",
+    "cos⁻¹(2) = π/3",
+    "tan⁻¹ has domain [−1, 1]"
+  ], correct: 1 },
+];
+
+// ─── UTILITY ──────────────────────────────────────────────────────────────────
+
+function generateCode(name, scores) {
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const ts = Date.now().toString(36).slice(-4).toUpperCase();
+  const initials = name.trim().split(/\s+/).map(w => w[0]).join("").toUpperCase().slice(0, 3);
+  return `${initials}-L39-${total}-${ts}`;
+}
+
+// ─── SHARED COMPONENTS ───────────────────────────────────────────────────────
+
+const nextBtnStyle = {
+  padding: "14px 40px", fontSize: 15, fontWeight: 800, letterSpacing: ".04em",
+  border: "none", borderRadius: 999, cursor: "pointer", textTransform: "uppercase",
+  background: `linear-gradient(135deg, ${C.teal}, ${C.blue})`, color: "#fff",
+  transition: "all .3s", boxShadow: "0 4px 20px rgba(31,111,235,0.3)",
+};
+const checkBtnStyle = (color) => ({
+  marginTop: 8, padding: "8px 24px", fontSize: 12, fontWeight: 700,
+  border: `1px solid ${color}`, borderRadius: 999, background: "transparent",
+  color, cursor: "pointer", transition: "all .2s",
+});
+const inputStyle = {
+  padding: "10px 14px", fontSize: 17, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace",
+  background: "rgba(255,255,255,0.05)", borderRadius: 10, color: "#fff", width: 110, textAlign: "center",
+  border: "1px solid rgba(255,255,255,0.15)",
+};
+
+function ProgressBar({ current, total }) {
+  const pct = Math.round((current / (total - 1)) * 100);
+  return (
+    <div style={{ width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: 999, height: 8, overflow: "hidden" }}>
+      <div style={{ width: pct + "%", height: "100%", background: `linear-gradient(90deg, ${C.teal}, ${C.blue}, ${C.purple})`, borderRadius: 999, transition: "width 0.5s cubic-bezier(.4,0,.2,1)" }} />
+    </div>
+  );
+}
+
+function SectionNav({ idx, onNav }) {
+  const labels = {
+    welcome:"Start", warmup:"Warm Up", arcsin_table:"sin⁻¹ Table", arcsin_eval:"sin⁻¹ Eval",
+    arccos_table:"cos⁻¹ Table", arccos_eval:"cos⁻¹ Eval", arctan_table:"tan⁻¹ Table", arctan_eval:"tan⁻¹ Eval",
+    domain_range:"D & R", calculator:"Calculator", properties:"Properties",
+    composites:"Composites", algebraic:"Algebraic", application:"Real World",
+    mixed:"Mixed", exit:"Exit", results:"Results"
+  };
+  return (
+    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", justifyContent: "center", marginBottom: 4 }}>
+      {SECTIONS.map((s, i) => (
+        <button key={s} onClick={() => onNav(i)} style={{
+          padding: "4px 7px", fontSize: 8.5, fontWeight: i === idx ? 800 : 500, letterSpacing: ".03em",
+          border: "none", borderRadius: 999, cursor: "pointer",
+          background: i === idx ? `linear-gradient(135deg,${C.teal},${C.blue})` : i < idx ? `rgba(6,214,160,0.15)` : "rgba(255,255,255,0.06)",
+          color: i === idx ? "#fff" : i < idx ? C.green : "rgba(255,255,255,0.35)", transition: "all .25s", textTransform: "uppercase",
+        }}>{labels[s]}</button>
+      ))}
+    </div>
+  );
+}
+
+function SectionHeader({ icon, title, subtitle, part }) {
+  return (
+    <div style={{ marginBottom: 28, animation: "fadeUp .5s ease" }}>
+      {part && <div style={{ fontSize: 11, fontWeight: 800, color: C.purple, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 }}>{part}</div>}
+      <div style={{ fontSize: 36, marginBottom: 8 }}>{icon}</div>
+      <h2 style={{ fontSize: 24, fontWeight: 900, color: "#fff", marginBottom: 6, lineHeight: 1.2 }}>{title}</h2>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{subtitle}</p>
+    </div>
+  );
+}
+
+function OptionButton({ text, selected, correct, revealed, onClick }) {
+  let bg = "rgba(255,255,255,0.04)", border = "1px solid rgba(255,255,255,0.1)", color = "rgba(255,255,255,0.85)";
+  if (selected && !revealed) { bg = `rgba(31,111,235,0.15)`; border = `1px solid ${C.blue}`; color = "#fff"; }
+  if (revealed && selected && correct) { bg = "rgba(6,214,160,0.18)"; border = `1px solid ${C.green}`; color = C.green; }
+  if (revealed && selected && !correct) { bg = "rgba(239,71,111,0.18)"; border = `1px solid ${C.coral}`; color = C.coral; }
+  if (revealed && !selected && correct) { bg = "rgba(6,214,160,0.08)"; border = `1px solid rgba(6,214,160,0.4)`; color = C.green; }
+  return (
+    <button onClick={onClick} disabled={revealed} style={{
+      display: "block", width: "100%", textAlign: "left", padding: "12px 16px", fontSize: 14, lineHeight: 1.45,
+      fontFamily: "'DM Sans',sans-serif", background: bg, border, color, borderRadius: 10,
+      cursor: revealed ? "default" : "pointer", transition: "all .2s", marginBottom: 8,
+    }}>
+      {text}
+      {revealed && selected && correct && <span style={{ float: "right" }}>✓</span>}
+      {revealed && selected && !correct && <span style={{ float: "right" }}>✗</span>}
+    </button>
+  );
+}
+
+function Callout({ color, title, children, style: s }) {
+  return (
+    <div style={{ background: color + "12", border: `1px solid ${color}40`, borderRadius: 12, padding: "14px 18px", marginBottom: 14, ...s }}>
+      {title && <div style={{ fontSize: 11, fontWeight: 800, color, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>{title}</div>}
+      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.6 }}>{children}</div>
+    </div>
+  );
+}
+
+// ─── SVG: Unit Circle Highlight ───────────────────────────────────────────────
+function UnitCircleSVG({ highlightRange, color, label }) {
+  const r = 80;
+  const cx = 110, cy = 110;
+  const angles = highlightRange || [];
+  
+  // Draw highlighted arc
+  const startAngle = angles[0] || 0;
+  const endAngle = angles[1] || 0;
+  const startRad = -startAngle * Math.PI / 180;
+  const endRad = -endAngle * Math.PI / 180;
+  
+  const x1 = cx + r * Math.cos(startRad);
+  const y1 = cy + r * Math.sin(startRad);
+  const x2 = cx + r * Math.cos(endRad);
+  const y2 = cy + r * Math.sin(endRad);
+  const largeArc = Math.abs(endAngle - startAngle) > 180 ? 1 : 0;
+  const sweep = endAngle > startAngle ? 0 : 1;
+  
+  return (
+    <svg viewBox="0 0 220 220" style={{ width: "100%", maxWidth: 200 }}>
+      {/* Grid */}
+      <line x1={cx} y1={10} x2={cx} y2={210} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      <line x1={10} y1={cy} x2={210} y2={cy} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      {/* Circle */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      {/* Highlighted arc */}
+      {angles.length === 2 && (
+        <path d={`M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" opacity="0.8" />
+      )}
+      {/* Labels */}
+      <text x={cx + r + 8} y={cy + 4} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'JetBrains Mono'">0</text>
+      <text x={cx - 4} y={cy - r - 6} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'JetBrains Mono'" textAnchor="middle">π/2</text>
+      <text x={cx - r - 12} y={cy + 4} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'JetBrains Mono'" textAnchor="end">π</text>
+      <text x={cx - 4} y={cy + r + 14} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'JetBrains Mono'" textAnchor="middle">3π/2</text>
+      {/* Label */}
+      {label && <text x={cx} y={20} fill={color} fontSize="11" fontWeight="bold" fontFamily="'DM Sans'" textAnchor="middle">{label}</text>}
+    </svg>
+  );
+}
+
+// ─── SVG: Right Triangle ──────────────────────────────────────────────────────
+function RightTriangleSVG({ opp, adj, hyp, color }) {
+  return (
+    <svg viewBox="0 0 200 160" style={{ width: "100%", maxWidth: 200 }}>
+      {/* Triangle */}
+      <polygon points="20,140 180,140 180,30" fill="none" stroke={color || C.blue} strokeWidth="2.5" />
+      {/* Right angle */}
+      <polyline points="165,140 165,125 180,125" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+      {/* θ arc */}
+      <path d="M 45,140 A 25 25 0 0 0 38,126" fill="none" stroke={C.green} strokeWidth="2" />
+      <text x="50" y="130" fill={C.green} fontSize="12" fontWeight="bold" fontFamily="'DM Sans'">θ</text>
+      {/* Labels */}
+      <text x="100" y="155" fill="rgba(255,255,255,0.6)" fontSize="11" fontWeight="bold" fontFamily="'JetBrains Mono'" textAnchor="middle">{adj} (adj)</text>
+      <text x="192" y="90" fill="rgba(255,255,255,0.6)" fontSize="11" fontWeight="bold" fontFamily="'JetBrains Mono'" textAnchor="start">{opp}</text>
+      <text x="190" y="103" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'JetBrains Mono'" textAnchor="start">(opp)</text>
+      <text x="85" y="80" fill={color || C.blue} fontSize="11" fontWeight="bold" fontFamily="'JetBrains Mono'" textAnchor="middle">{hyp} (hyp)</text>
+    </svg>
+  );
+}
+
+// ─── SVG: Graph of inverse function ──────────────────────────────────────────
+function InverseGraphSVG({ fn, color, label, xRange, yRange }) {
+  const w = 260, h = 180, pad = 30;
+  const gw = w - 2*pad, gh = h - 2*pad;
+  const [xMin, xMax] = xRange;
+  const [yMin, yMax] = yRange;
+  
+  const toX = (x) => pad + (x - xMin) / (xMax - xMin) * gw;
+  const toY = (y) => pad + (yMax - y) / (yMax - yMin) * gh;
+  
+  const points = [];
+  const steps = 100;
+  for (let i = 0; i <= steps; i++) {
+    const x = xMin + (xMax - xMin) * i / steps;
+    const y = fn(x);
+    if (y !== null && isFinite(y) && y >= yMin && y <= yMax) {
+      points.push(`${toX(x)},${toY(y)}`);
+    }
+  }
+  
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", maxWidth: 260 }}>
+      {/* Grid lines */}
+      <line x1={pad} y1={toY(0)} x2={w-pad} y2={toY(0)} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+      <line x1={toX(0)} y1={pad} x2={toX(0)} y2={h-pad} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+      {/* Curve */}
+      <polyline points={points.join(" ")} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+      {/* Label */}
+      <text x={w - pad - 4} y={pad + 14} fill={color} fontSize="10" fontWeight="bold" fontFamily="'DM Sans'" textAnchor="end">{label}</text>
+    </svg>
+  );
+}
+
+
+// ─── WELCOME ──────────────────────────────────────────────────────────────────
+
+function Welcome({ onNext, studentName, setStudentName }) {
+  return (
+    <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto", animation: "fadeUp .6s ease" }}>
+      <div style={{ fontSize: 64, marginBottom: 12, animation: "float 3s ease-in-out infinite" }}>📐</div>
+      <h1 style={{ fontSize: 32, fontWeight: 900, lineHeight: 1.15, marginBottom: 8 }}>
+        <span style={{ background: `linear-gradient(135deg, ${C.sky}, ${C.purple}, ${C.orange})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Inverse Trigonometric</span>
+        <br />
+        <span style={{ background: `linear-gradient(135deg, ${C.orange}, ${C.blue})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Functions</span>
+      </h1>
+      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, marginBottom: 4 }}>Lesson 3.9 Worksheet — AP Precalculus (Unit 3)</p>
+      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, marginBottom: 28 }}>Mr. Omar · Austin Peace Academy</p>
+
+      <Callout color={C.purple} title="What you'll master today">
+        Why we restrict domains · Evaluating sin⁻¹, cos⁻¹, tan⁻¹ · Domain & Range · Inverse properties · Composites with right triangles · Algebraic expressions · Real-world applications
+      </Callout>
+      <Callout color={C.orange} title="Prerequisites">
+        Unit circle values (30-60-90, 45-45-90) · One-to-one functions & HLT (Unit 2) · SOH-CAH-TOA
+      </Callout>
+      <Callout color={C.teal} title="How this works">
+        Work through each section in order. You'll build understanding step by step. Your score and completion code will appear at the end — share the code with Mr. Omar!
+      </Callout>
+
+      <div style={{ margin: "28px 0" }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".06em" }}>Enter your full name</label>
+        <input value={studentName} onChange={e => setStudentName(e.target.value)} placeholder="First and Last Name"
+          style={{ width: "100%", maxWidth: 340, padding: "14px 20px", fontSize: 16, fontWeight: 600, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", textAlign: "center", fontFamily: "'DM Sans',sans-serif" }} />
+      </div>
+      <button onClick={onNext} disabled={!studentName.trim()} style={{ ...nextBtnStyle, opacity: studentName.trim() ? 1 : 0.35, cursor: studentName.trim() ? "pointer" : "not-allowed" }}>Let's Go! →</button>
+    </div>
+  );
+}
+
+// ─── GENERIC MC SECTION ─────────────────────────────────────────────────────
+
+function MCSection({ onNext, score, setScore, scoreKey, questions, icon, title, subtitle, part, showExplanation = true, termField, extraContent }) {
+  const [answers, setAnswers] = useState({});
+  const [revealed, setRevealed] = useState({});
+  const allDone = Object.keys(revealed).length === questions.length;
+
+  function select(qi, oi) { if (revealed[qi] !== undefined) return; setAnswers(a => ({ ...a, [qi]: oi })); }
+  function check(qi) { if (answers[qi] === undefined) return; setRevealed(r => ({ ...r, [qi]: true })); }
+
+  useEffect(() => {
+    if (allDone) {
+      const pts = questions.reduce((s, q, i) => s + (answers[i] === q.correct ? 1 : 0), 0);
+      setScore(sc => ({ ...sc, [scoreKey]: pts }));
+    }
+  }, [allDone]);
+
+  return (
+    <div style={{ animation: "fadeUp .5s ease" }}>
+      <SectionHeader icon={icon} title={title} subtitle={subtitle} part={part} />
+      {extraContent}
+      {questions.map((q, qi) => (
+        <div key={qi} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 20px", marginBottom: 16, animation: `fadeUp .4s ease ${qi * 0.07}s both` }}>
+          {termField && <div style={{ fontSize: 11, color: C.blue, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Term {qi + 1}</div>}
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{termField ? q[termField] : q.question}</div>
+          {q.setup && <Callout color={C.indigo} title="Setup" style={{ marginBottom: 12 }}>{q.setup}</Callout>}
+          {q.options.map((opt, oi) => (
+            <OptionButton key={oi} text={opt} selected={answers[qi] === oi} correct={oi === q.correct} revealed={!!revealed[qi]} onClick={() => select(qi, oi)} />
+          ))}
+          {!revealed[qi] && answers[qi] !== undefined && <button onClick={() => check(qi)} style={checkBtnStyle(C.blue)}>Check Answer</button>}
+          {revealed[qi] && answers[qi] !== q.correct && <div style={{ marginTop: 8, fontSize: 13, color: C.coral }}>Correct: <strong>{q.options[q.correct]}</strong></div>}
+          {revealed[qi] && showExplanation && q.explanation && <Callout color={answers[qi] === q.correct ? C.green : C.orange} style={{ marginTop: 10, marginBottom: 0 }}>{q.explanation}</Callout>}
+        </div>
+      ))}
+      {allDone && (
+        <div style={{ textAlign: "center", marginTop: 16, animation: "popIn .4s ease" }}>
+          <div style={{ color: C.green, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Section complete! {score[scoreKey] || 0}/{questions.length} correct</div>
+          <button onClick={onNext} style={nextBtnStyle}>Next Section →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TABLE FILL SECTION ──────────────────────────────────────────────────────
+
+function TableFillSection({ onNext, score, setScore, scoreKey, angles, valueKey, fnName, icon, title, subtitle, part, color, graphFn, graphLabel, graphX, graphY, circleAngles, restrictedLabel }) {
+  const [answers, setAnswers] = useState({});
+  const [checked, setChecked] = useState(false);
+  const allFilled = angles.every((_, i) => (answers[i] || "").trim() !== "");
+  
+  function doCheck() {
+    setChecked(true);
+    let pts = 0;
+    angles.forEach((a, i) => {
+      const user = (answers[i] || "").trim().replace(/\s/g, "");
+      const correct = a[valueKey].replace(/\s/g, "");
+      if (user === correct) pts++;
+    });
+    setScore(sc => ({ ...sc, [scoreKey]: pts }));
+  }
+  
+  const normalize = (s) => s.replace(/\s/g, "");
+  
+  return (
+    <div style={{ animation: "fadeUp .5s ease" }}>
+      <SectionHeader icon={icon} title={title} subtitle={subtitle} part={part} />
+      
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+        <div style={{ flex: "1 1 200px", minWidth: 180 }}>
+          <Callout color={color} title={`Restricted Domain: ${restrictedLabel}`}>
+            On this interval, {fnName} is <strong>one-to-one</strong> — every output occurs exactly once. This is what allows the inverse to exist!
+          </Callout>
+        </div>
+        <div style={{ flex: "0 0 200px", display: "flex", justifyContent: "center" }}>
+          <UnitCircleSVG highlightRange={circleAngles} color={color} label={restrictedLabel} />
+        </div>
+      </div>
+      
+      <Callout color={C.orange} title="Tip">
+        This table becomes your cheat sheet for evaluating {fnName}⁻¹(x). Just read it <strong>backwards</strong>: given the output value, find the angle!
+      </Callout>
+      
+      <div style={{ overflowX: "auto", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 0, minWidth: angles.length * 80 }}>
+          {angles.map((a, i) => {
+            const user = normalize(answers[i] || "");
+            const correct = normalize(a[valueKey]);
+            const isCorrect = user === correct;
+            return (
+              <div key={i} style={{ flex: "1 1 0", minWidth: 72, textAlign: "center", padding: "10px 4px", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color, marginBottom: 8, fontFamily: "'JetBrains Mono',monospace" }}>{a.display}</div>
+                <input
+                  value={answers[i] || ""}
+                  onChange={e => setAnswers(aa => ({ ...aa, [i]: e.target.value }))}
+                  disabled={checked}
+                  placeholder="?"
+                  style={{
+                    ...inputStyle,
+                    width: 64, fontSize: 13, padding: "8px 4px",
+                    borderColor: checked ? (isCorrect ? C.green : C.coral) : "rgba(255,255,255,0.15)",
+                    background: checked ? (isCorrect ? "rgba(6,214,160,0.1)" : "rgba(239,71,111,0.1)") : "rgba(255,255,255,0.05)",
+                  }}
+                />
+                {checked && !isCorrect && <div style={{ fontSize: 10, color: C.coral, marginTop: 4, fontFamily: "'JetBrains Mono',monospace" }}>{a[valueKey]}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      <Callout color={C.teal} title="Accepted formats">
+        Use these formats: <strong>0</strong>, <strong>1</strong>, <strong>−1</strong>, <strong>1/2</strong>, <strong>−1/2</strong>, <strong>√2/2</strong>, <strong>−√2/2</strong>, <strong>√3/2</strong>, <strong>−√3/2</strong>, <strong>√3</strong>, <strong>−√3</strong>, <strong>√3/3</strong>, <strong>−√3/3</strong>, <strong>und.</strong>
+      </Callout>
+      
+      {!checked && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button onClick={doCheck} disabled={!allFilled} style={{ ...nextBtnStyle, opacity: allFilled ? 1 : 0.35, cursor: allFilled ? "pointer" : "not-allowed" }}>Check All Answers</button>
+        </div>
+      )}
+      {checked && (
+        <div style={{ textAlign: "center", marginTop: 16, animation: "popIn .4s ease" }}>
+          <div style={{ color: C.green, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Table complete! {score[scoreKey] || 0}/{angles.length} correct</div>
+          <button onClick={onNext} style={nextBtnStyle}>Next Section →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TRUE/FALSE PROPERTIES SECTION ───────────────────────────────────────────
+
+function PropertiesSection({ onNext, score, setScore }) {
+  const [answers, setAnswers] = useState({});
+  const [checked, setChecked] = useState({});
+  const allChecked = Object.keys(checked).length === PROPERTIES_Q.length;
+  
+  function check(qi) { setChecked(c => ({ ...c, [qi]: true })); }
+  
+  useEffect(() => {
+    if (allChecked) {
+      let pts = 0;
+      PROPERTIES_Q.forEach((q, qi) => {
+        if ((answers[qi] === "true" && q.answer) || (answers[qi] === "false" && !q.answer)) pts++;
+      });
+      setScore(sc => ({ ...sc, properties: pts }));
+    }
+  }, [allChecked]);
+  
+  return (
+    <div style={{ animation: "fadeUp .5s ease" }}>
+      <SectionHeader icon="🔄" title="Inverse Properties: True or False?" subtitle="Can you cancel? Check if the inner value is in the valid interval!" part="Part 4: Inverse Properties" />
+      
+      <Callout color={C.purple} title="The Rules">
+        <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
+          <div>• sin(sin⁻¹(x)) = x when <strong>x ∈ [−1, 1]</strong></div>
+          <div>• sin⁻¹(sin(x)) = x when <strong>x ∈ [−π/2, π/2]</strong></div>
+          <div>• cos(cos⁻¹(x)) = x when <strong>x ∈ [−1, 1]</strong></div>
+          <div>• cos⁻¹(cos(x)) = x when <strong>x ∈ [0, π]</strong></div>
+          <div>• tan(tan⁻¹(x)) = x when <strong>x ∈ (−∞, ∞)</strong></div>
+          <div>• tan⁻¹(tan(x)) = x when <strong>x ∈ (−π/2, π/2)</strong></div>
+        </div>
+      </Callout>
+      
+      <Callout color={C.coral} title="Key Warning">
+        When the inner value is <strong>outside</strong> the valid interval, you CANNOT just cancel! Evaluate the inner function first, then apply the inverse.
+      </Callout>
+      
+      {PROPERTIES_Q.map((q, qi) => {
+        const a = answers[qi];
+        const isCorrect = (a === "true" && q.answer) || (a === "false" && !q.answer);
+        return (
+          <div key={qi} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 20px", marginBottom: 16, animation: `fadeUp .4s ease ${qi * 0.06}s both` }}>
+            <div style={{ fontSize: 11, color: C.purple, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>Statement {qi + 1}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 14, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-.02em" }}>{q.statement}</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 10 }}>
+              {["true", "false"].map(opt => (
+                <button key={opt} onClick={() => !checked[qi] && setAnswers(aa => ({ ...aa, [qi]: opt }))} disabled={!!checked[qi]} style={{
+                  padding: "10px 28px", fontSize: 14, fontWeight: 800, borderRadius: 10, cursor: checked[qi] ? "default" : "pointer", textTransform: "uppercase", transition: "all .2s",
+                  background: a === opt ? (checked[qi] ? (isCorrect ? C.green + "30" : C.coral + "30") : C.blue + "20") : "rgba(255,255,255,0.04)",
+                  border: a === opt ? `2px solid ${checked[qi] ? (isCorrect ? C.green : C.coral) : C.blue}` : "1px solid rgba(255,255,255,0.1)",
+                  color: a === opt ? "#fff" : "rgba(255,255,255,0.5)",
+                }}>{opt === "true" ? "✓ True" : "✗ False"}</button>
+              ))}
+            </div>
+            {!checked[qi] && a && <div style={{ textAlign: "center" }}><button onClick={() => check(qi)} style={checkBtnStyle(C.purple)}>Check</button></div>}
+            {checked[qi] && <Callout color={isCorrect ? C.green : C.coral} style={{ marginTop: 8, marginBottom: 0 }}>{isCorrect ? "✓ Correct! " : "✗ Incorrect. "}{q.explanation}</Callout>}
+          </div>
+        );
+      })}
+      {allChecked && (
+        <div style={{ textAlign: "center", marginTop: 16, animation: "popIn .4s ease" }}>
+          <div style={{ color: C.green, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Section complete! {score.properties || 0}/{PROPERTIES_Q.length} correct</div>
+          <button onClick={onNext} style={nextBtnStyle}>Next Section →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── COMPOSITES SECTION ──────────────────────────────────────────────────────
+
+function CompositesSection({ onNext, score, setScore }) {
+  const triangles = [
+    { opp: "−1", adj: "√3", hyp: "2" },
+    { opp: "12", adj: "5", hyp: "13" },
+    { opp: "3", adj: "4", hyp: "5" },
+    { opp: "4", adj: "3", hyp: "5" },
+  ];
+  
+  return (
+    <MCSection
+      onNext={onNext} score={score} setScore={setScore}
+      scoreKey="composites" questions={COMPOSITES_Q}
+      icon="📐" title="Composite Trig Expressions" subtitle="Use the right-triangle method: let θ = inverse trig, draw the triangle, read the answer."
+      part="Part 5: Composites"
+      showExplanation={true}
+      extraContent={
+        <div>
+          <Callout color={C.blue} title="The Right-Triangle Method">
+            <div style={{ fontSize: 13 }}>
+              1. Let θ = the inverse trig (inner function) → this gives you a ratio<br/>
+              2. Draw a right triangle with that ratio (opp/hyp, adj/hyp, or opp/adj)<br/>
+              3. Use Pythagorean theorem to find the missing side<br/>
+              4. Read the outer function from the triangle
+            </div>
+          </Callout>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 20 }}>
+            {triangles.map((t, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px", flex: "0 0 140px" }}>
+                <div style={{ fontSize: 9, color: C.indigo, fontWeight: 700, textAlign: "center", marginBottom: 4 }}>Q{i+1} Triangle</div>
+                <RightTriangleSVG opp={t.opp} adj={t.adj} hyp={t.hyp} color={C.indigo} />
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+    />
+  );
+}
+
+// ─── EXIT TICKET ───────────────────────────────────────────────────────────
+
+function ExitTicketSection({ onNext, score, setScore }) {
+  const [answers, setAnswers] = useState({});
+  const [checked, setChecked] = useState(false);
+  function doCheck() {
+    setChecked(true);
+    let pts = 0;
+    EXIT_TICKET.forEach((q, qi) => {
+      if (q.type === "mc") { if (answers[qi] === q.correct) pts++; }
+      else { if ((answers[`fill-${qi}`] || "").trim().replace(/\s/g,"") === q.answer.replace(/\s/g,"")) pts++; }
+    });
+    setScore(sc => ({ ...sc, exit: pts }));
+  }
+  const allAnswered = EXIT_TICKET.every((q, qi) => q.type === "mc" ? answers[qi] !== undefined : (answers[`fill-${qi}`] || "").trim() !== "");
+
+  return (
+    <div style={{ animation: "fadeUp .5s ease" }}>
+      <SectionHeader icon="🎫" title="Exit Ticket" subtitle="Final check! Answer ALL questions then submit. One chance only." />
+      <Callout color={C.coral} title="Important">Answer every question before submitting. You cannot change answers after!</Callout>
+      {EXIT_TICKET.map((q, qi) => (
+        <div key={qi} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 20px", marginBottom: 16, animation: `fadeUp .4s ease ${qi * 0.08}s both` }}>
+          <div style={{ fontSize: 11, color: C.teal, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>Question {qi + 1}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{q.question}</div>
+          {q.type === "mc" && q.options.map((opt, oi) => (
+            <OptionButton key={oi} text={opt} selected={answers[qi] === oi} correct={oi === q.correct} revealed={checked} onClick={() => !checked && setAnswers(a => ({ ...a, [qi]: oi }))} />
+          ))}
+          {q.type === "fill" && (
+            <div>
+              <input value={answers[`fill-${qi}`] || ""} onChange={e => setAnswers(a => ({ ...a, [`fill-${qi}`]: e.target.value }))} disabled={checked} placeholder="Type your answer"
+                style={{ ...inputStyle, width: 160, borderColor: checked ? ((answers[`fill-${qi}`] || "").trim().replace(/\s/g,"") === q.answer.replace(/\s/g,"") ? C.green : C.coral) : "rgba(255,255,255,0.15)" }} />
+              {checked && (answers[`fill-${qi}`] || "").trim().replace(/\s/g,"") !== q.answer.replace(/\s/g,"") && <div style={{ marginTop: 6, fontSize: 13, color: C.coral }}>Correct: <strong>{q.answer}</strong></div>}
+            </div>
+          )}
+        </div>
+      ))}
+      {!checked && <div style={{ textAlign: "center", marginTop: 16 }}><button onClick={doCheck} disabled={!allAnswered} style={{ ...nextBtnStyle, opacity: allAnswered ? 1 : 0.35, cursor: allAnswered ? "pointer" : "not-allowed" }}>Submit Exit Ticket</button></div>}
+      {checked && (
+        <div style={{ textAlign: "center", marginTop: 16, animation: "popIn .4s ease" }}>
+          <div style={{ color: C.green, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Exit ticket submitted! {score.exit || 0}/{EXIT_TICKET.length} correct</div>
+          <button onClick={onNext} style={nextBtnStyle}>See My Results →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── RESULTS ────────────────────────────────────────────────────────────────
+
+function ResultsSection({ score, studentName, onRestart }) {
+  const [copied, setCopied] = useState(false);
+  const sections = [
+    { key: "warmup", label: "Warm Up", total: WARMUP_QUESTIONS.length, icon: "🔥" },
+    { key: "arcsin_table", label: "sin⁻¹ Table", total: ARCSIN_TABLE_ANGLES.length, icon: "📊" },
+    { key: "arcsin_eval", label: "sin⁻¹ Evaluate", total: ARCSIN_EVAL.length, icon: "🎯" },
+    { key: "arccos_table", label: "cos⁻¹ Table", total: ARCCOS_TABLE_ANGLES.length, icon: "📊" },
+    { key: "arccos_eval", label: "cos⁻¹ Evaluate", total: ARCCOS_EVAL.length, icon: "🎯" },
+    { key: "arctan_table", label: "tan⁻¹ Table", total: ARCTAN_TABLE_ANGLES.length, icon: "📊" },
+    { key: "arctan_eval", label: "tan⁻¹ Evaluate", total: ARCTAN_EVAL.length, icon: "🎯" },
+    { key: "domain_range", label: "Domain & Range", total: DOMAIN_RANGE_Q.length, icon: "📏" },
+    { key: "calculator", label: "Calculator", total: CALCULATOR_Q.length, icon: "🔢" },
+    { key: "properties", label: "Inverse Properties", total: PROPERTIES_Q.length, icon: "🔄" },
+    { key: "composites", label: "Composites", total: COMPOSITES_Q.length, icon: "📐" },
+    { key: "algebraic", label: "Algebraic", total: ALGEBRAIC_Q.length, icon: "✏️" },
+    { key: "application", label: "Applications", total: APPLICATION_Q.length, icon: "✈️" },
+    { key: "mixed", label: "Mixed Practice", total: MIXED_PRACTICE.length, icon: "🔥" },
+    { key: "exit", label: "Exit Ticket", total: EXIT_TICKET.length, icon: "🎫" },
+  ];
+  const totalPts = sections.reduce((s, sec) => s + (score[sec.key] || 0), 0);
+  const totalMax = sections.reduce((s, sec) => s + sec.total, 0);
+  const pct = Math.round((totalPts / totalMax) * 100);
+  const code = generateCode(studentName, score);
+  let grade = "Keep Practicing!", gradeColor = C.coral, emoji = "💪";
+  if (pct >= 90) { grade = "Inverse Trig Master!"; gradeColor = C.green; emoji = "🏆"; }
+  else if (pct >= 75) { grade = "Great Job!"; gradeColor = C.blue; emoji = "⭐"; }
+  else if (pct >= 60) { grade = "Good Effort!"; gradeColor = C.gold; emoji = "👍"; }
+
+  function copyResults() {
+    const lines = [`INVERSE TRIG FUNCTIONS — LESSON 3.9 WORKSHEET RESULTS`, `Student: ${studentName}`, `Date: ${new Date().toLocaleDateString()}`, `Code: ${code}`, ``, `Overall: ${totalPts}/${totalMax} (${pct}%)`, `Grade: ${grade}`, ``, `SECTION BREAKDOWN:`, ...sections.map(s => `  ${s.label}: ${score[s.key] || 0}/${s.total}`)];
+    navigator.clipboard.writeText(lines.join("\n")).then(() => setCopied(true));
+    setTimeout(() => setCopied(false), 2500);
+  }
+
+  return (
+    <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto", animation: "fadeUp .6s ease" }}>
+      <div style={{ fontSize: 56, marginBottom: 8, animation: "float 3s ease-in-out infinite" }}>{emoji}</div>
+      <h2 style={{ fontSize: 28, fontWeight: 900, color: gradeColor, marginBottom: 4 }}>{grade}</h2>
+      <div style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", marginBottom: 24 }}>{studentName}'s Results</div>
+      <div style={{ position: "relative", width: 170, height: 170, margin: "0 auto 28px" }}>
+        <svg viewBox="0 0 170 170" style={{ transform: "rotate(-90deg)" }}>
+          <circle cx="85" cy="85" r="72" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="12" />
+          <circle cx="85" cy="85" r="72" fill="none" stroke={gradeColor} strokeWidth="12" strokeDasharray={(pct / 100) * 452 + " 452"} strokeLinecap="round" style={{ transition: "stroke-dasharray 1.2s ease" }} />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 38, fontWeight: 900, color: "#fff" }}>{pct}%</div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{totalPts}/{totalMax}</div>
+        </div>
+      </div>
+      <div style={{ textAlign: "left", marginBottom: 24 }}>
+        {sections.map((sec, si) => {
+          const pts = score[sec.key] || 0;
+          const p = sec.total > 0 ? Math.round((pts / sec.total) * 100) : 0;
+          return (
+            <div key={sec.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, marginBottom: 6, animation: `fadeUp .3s ease ${si * 0.04}s both` }}>
+              <span style={{ fontSize: 15 }}>{sec.icon}</span>
+              <span style={{ flex: 1, fontSize: 12, color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>{sec.label}</span>
+              <div style={{ width: 60, height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ width: p + "%", height: "100%", background: p === 100 ? C.green : p >= 60 ? C.blue : C.coral, borderRadius: 999, transition: "width .6s" }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", minWidth: 36, textAlign: "right", fontFamily: "'JetBrains Mono',monospace" }}>{pts}/{sec.total}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: C.orange, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Your Completion Code</div>
+        <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'JetBrains Mono',monospace", color: "#fff", letterSpacing: ".1em", marginBottom: 12 }}>{code}</div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>Share this code with Mr. Omar or copy your full results below.</div>
+        <button onClick={copyResults} style={{ padding: "10px 28px", fontSize: 13, fontWeight: 700, border: `1px solid ${C.teal}`, borderRadius: 999, background: copied ? `${C.green}20` : "transparent", color: copied ? C.green : C.teal, cursor: "pointer", transition: "all .3s" }}>
+          {copied ? "✓ Copied to Clipboard!" : "📋 Copy Full Results"}
+        </button>
+      </div>
+      <button onClick={onRestart} style={{ padding: "12px 36px", fontSize: 14, fontWeight: 700, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 999, background: "transparent", color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>↻ Try Again</button>
+    </div>
+  );
+}
+
+// ─── APP ────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [section, setSection] = useState(0);
+  const [studentName, setStudentName] = useState("");
+  const [score, setScore] = useState({
+    warmup:0, arcsin_table:0, arcsin_eval:0, arccos_table:0, arccos_eval:0,
+    arctan_table:0, arctan_eval:0, domain_range:0, calculator:0, properties:0,
+    composites:0, algebraic:0, application:0, mixed:0, exit:0
+  });
+  const next = () => setSection(s => Math.min(s + 1, SECTIONS.length - 1));
+  const restart = () => { setSection(0); setScore({warmup:0,arcsin_table:0,arcsin_eval:0,arccos_table:0,arccos_eval:0,arctan_table:0,arctan_eval:0,domain_range:0,calculator:0,properties:0,composites:0,algebraic:0,application:0,mixed:0,exit:0}); };
+  useEffect(() => { const el = document.getElementById("ws-top"); if (el) el.scrollIntoView({ behavior: "smooth" }); }, [section]);
+
+  const sIdx = SECTIONS[section];
+
+  return (
+    <div id="ws-top" style={{ maxWidth: 700, margin: "0 auto", padding: "32px 20px 60px" }}>
+      {section > 0 && section < SECTIONS.length - 1 && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionNav idx={section} onNav={setSection} />
+          <div style={{ marginTop: 8 }}><ProgressBar current={section} total={SECTIONS.length} /></div>
+        </div>
+      )}
+
+      {sIdx === "welcome" && <Welcome onNext={next} studentName={studentName} setStudentName={setStudentName} />}
+
+      {sIdx === "warmup" && <MCSection onNext={next} score={score} setScore={setScore} scoreKey="warmup" questions={WARMUP_QUESTIONS} icon="🔥" title="Warm-Up: What Does Inverse Mean?" subtitle="Quick review from Unit 2 — why can't we just invert trig functions directly?" part="Warm-Up" showExplanation />}
+
+      {sIdx === "arcsin_table" && (
+        <TableFillSection onNext={next} score={score} setScore={setScore} scoreKey="arcsin_table"
+          angles={ARCSIN_TABLE_ANGLES} valueKey="sinVal" fnName="sine"
+          icon="📊" title="Table: sin(θ) on Restricted Domain" subtitle="Fill in the sine values for each angle in [−π/2, π/2]."
+          part="Part 1: Inverse Sine" color={C.blue}
+          circleAngles={[270, 90]} restrictedLabel="[−π/2, π/2]"
+        />
+      )}
+
+      {sIdx === "arcsin_eval" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="arcsin_eval" questions={ARCSIN_EVAL}
+          icon="🎯" title="Evaluate sin⁻¹(x)" subtitle="Find the angle in [−π/2, π/2] whose sine equals the given value."
+          part="Part 1: Inverse Sine" showExplanation
+          extraContent={
+            <Callout color={C.blue} title="Workflow">
+              1. Let θ = sin⁻¹(x)  →  2. Rewrite: sin θ = x  →  3. Find θ in [−π/2, π/2] with that sine value
+            </Callout>
+          }
+        />
+      )}
+
+      {sIdx === "arccos_table" && (
+        <TableFillSection onNext={next} score={score} setScore={setScore} scoreKey="arccos_table"
+          angles={ARCCOS_TABLE_ANGLES} valueKey="cosVal" fnName="cosine"
+          icon="📊" title="Table: cos(θ) on Restricted Domain" subtitle="Fill in the cosine values for each angle in [0, π]."
+          part="Part 2: Inverse Cosine" color={C.green}
+          circleAngles={[0, 180]} restrictedLabel="[0, π]"
+        />
+      )}
+
+      {sIdx === "arccos_eval" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="arccos_eval" questions={ARCCOS_EVAL}
+          icon="🎯" title="Evaluate cos⁻¹(x)" subtitle="Find the angle in [0, π] whose cosine equals the given value."
+          part="Part 2: Inverse Cosine" showExplanation
+          extraContent={
+            <Callout color={C.green} title="Key Insight">
+              cos⁻¹ outputs angles in Q I or Q II. Negative cosine values → Q II angles (between π/2 and π).
+            </Callout>
+          }
+        />
+      )}
+
+      {sIdx === "arctan_table" && (
+        <TableFillSection onNext={next} score={score} setScore={setScore} scoreKey="arctan_table"
+          angles={ARCTAN_TABLE_ANGLES} valueKey="tanVal" fnName="tangent"
+          icon="📊" title="Table: tan(θ) on Restricted Domain" subtitle="Fill in the tangent values for each angle in (−π/2, π/2)."
+          part="Part 3: Inverse Tangent" color={C.orange}
+          circleAngles={[270, 90]} restrictedLabel="(−π/2, π/2)"
+        />
+      )}
+
+      {sIdx === "arctan_eval" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="arctan_eval" questions={ARCTAN_EVAL}
+          icon="🎯" title="Evaluate tan⁻¹(x)" subtitle="Find the angle in (−π/2, π/2) whose tangent equals the given value."
+          part="Part 3: Inverse Tangent" showExplanation
+          extraContent={
+            <Callout color={C.orange} title="Remember">
+              tan⁻¹ accepts ANY real number! Its range is (−π/2, π/2) with open parentheses. Horizontal asymptotes at y = ±π/2.
+            </Callout>
+          }
+        />
+      )}
+
+      {sIdx === "domain_range" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="domain_range" questions={DOMAIN_RANGE_Q}
+          icon="📏" title="Domain, Range & Quadrants" subtitle="Know these cold — they tell you which quadrant the answer lives in!"
+          part="Summary" showExplanation
+          extraContent={
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "16px", marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.purple, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>Side-by-Side Comparison</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {[
+                  { name: "sin⁻¹(x)", domain: "[−1, 1]", range: "[−π/2, π/2]", quads: "Q I & IV", color: C.blue },
+                  { name: "cos⁻¹(x)", domain: "[−1, 1]", range: "[0, π]", quads: "Q I & II", color: C.green },
+                  { name: "tan⁻¹(x)", domain: "(−∞, ∞)", range: "(−π/2, π/2)", quads: "Q I & IV", color: C.orange },
+                ].map((f, i) => (
+                  <div key={i} style={{ background: f.color + "10", border: `1px solid ${f.color}30`, borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: f.color, marginBottom: 8, fontFamily: "'JetBrains Mono',monospace" }}>{f.name}</div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>Domain</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{f.domain}</div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>Range</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{f.range}</div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>Quadrants</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{f.quads}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          }
+        />
+      )}
+
+      {sIdx === "calculator" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="calculator" questions={CALCULATOR_Q}
+          icon="🔢" title="Calculator Approximations" subtitle="When the input isn't a standard unit-circle value, use your calculator (RADIAN mode!)."
+          showExplanation
+          extraContent={
+            <Callout color={C.coral} title="RADIAN Mode!">
+              Make sure your calculator is set to <strong>RADIAN</strong>, not degree! An error message means the input is outside the domain.
+            </Callout>
+          }
+        />
+      )}
+
+      {sIdx === "properties" && <PropertiesSection onNext={next} score={score} setScore={setScore} />}
+
+      {sIdx === "composites" && <CompositesSection onNext={next} score={score} setScore={setScore} />}
+
+      {sIdx === "algebraic" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="algebraic" questions={ALGEBRAIC_Q}
+          icon="✏️" title="Write as Algebraic Expressions" subtitle="Convert trig(inverse trig(x)) into pure algebra using right triangles."
+          part="Part 5: Composites (continued)" showExplanation
+          extraContent={
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginBottom: 20 }}>
+              <div style={{ flex: "0 0 180px" }}>
+                <div style={{ fontSize: 10, color: C.indigo, fontWeight: 700, textAlign: "center", marginBottom: 4 }}>Generic Triangle for cos⁻¹(x)</div>
+                <RightTriangleSVG opp="√(1−x²)" adj="x" hyp="1" color={C.green} />
+              </div>
+              <div style={{ flex: "0 0 180px" }}>
+                <div style={{ fontSize: 10, color: C.indigo, fontWeight: 700, textAlign: "center", marginBottom: 4 }}>Generic Triangle for sin⁻¹(x)</div>
+                <RightTriangleSVG opp="x" adj="√(1−x²)" hyp="1" color={C.blue} />
+              </div>
+            </div>
+          }
+        />
+      )}
+
+      {sIdx === "application" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="application" questions={APPLICATION_Q}
+          icon="✈️" title="Real-World Applications" subtitle="Inverse trig is the tool for finding unknown angles from known sides."
+          part="Part 6: Applications" showExplanation
+          extraContent={
+            <Callout color={C.teal} title="Key Idea">
+              When you know side lengths and need to find an <strong>angle</strong>, use inverse trig! Set up the ratio (SOH-CAH-TOA), then apply the inverse function.
+            </Callout>
+          }
+        />
+      )}
+
+      {sIdx === "mixed" && (
+        <MCSection onNext={next} score={score} setScore={setScore} scoreKey="mixed" questions={MIXED_PRACTICE}
+          icon="🔥" title="Mixed Practice" subtitle="Everything combined! Show what you've learned across all topics."
+          showExplanation={false}
+        />
+      )}
+
+      {sIdx === "exit" && <ExitTicketSection onNext={next} score={score} setScore={setScore} />}
+
+      {sIdx === "results" && <ResultsSection score={score} studentName={studentName} onRestart={restart} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
